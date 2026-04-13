@@ -2,18 +2,22 @@ const express = require("express");
 const app = express();
 const port = 3000;
 
-app.get("/", (req, res) => {
-  res.send("Server Started!");
-});
+const connectDB = require("./config/database");
+const registerUser = require("./apis/auth");
 
-app.get("/test", (req, res) => {
-  res.send("Hello from the server..!");
-});
+// Middleware to parse JSON bodies
+app.use(express.json());
 
-app.get("/hello", (req, res) => {
-  res.send("Bhoomika is here");
-});
+// Authentication route
+app.post("/register", registerUser);
 
-app.listen(port, () => {
-  console.log(`Server running on port --- ${port}`);
-});
+connectDB()
+  .then(() => {
+    console.log("database connected successfully");
+    app.listen(port, () => {
+      console.log(`Server running on port --- ${port}`);
+    });
+  })
+  .catch((err) => {
+    console.log("Error connecting to database", err);
+  });
