@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const validator = require("validator");
 
 const userSchema = new mongoose.Schema(
   {
@@ -45,35 +46,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, "password is required"],
       minlength: [8, "Password must be at least 8 characters"],
-
-      validate: [
-        {
-          // 1. Complexity Check (Regex) This Regex requires: 1 Uppercase, 1 Lowercase, 1 Number, and 1 Special Character
-          validator: function (value) {
-            return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(
-              value,
-            );
-          },
-          message:
-            "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character",
-        },
-        {
-          // 2. Personal Info & Common Words Check
-          validator: function (value) {
-            const passwordLower = value.toLowerCase();
-            const firstNameLower = this.firstName
-              ? this.firstName.toLowerCase()
-              : "";
-
-            return (
-              !passwordLower.includes("password") &&
-              (firstNameLower === "" || !passwordLower.includes(firstNameLower))
-            );
-          },
-          message:
-            "Password cannot contain the word 'password' or your first name",
-        },
-      ],
+      validate: {
+        validator: (value) => validator.isStrongPassword(value),
+        message:
+          "Password must contain at least 8 characters, including uppercase, lowercase, number, and symbol",
+      },
       // Use select: false so password isn't sent in queries by default
       select: false,
     },
@@ -97,15 +74,13 @@ const userSchema = new mongoose.Schema(
         message: "Profile picture must be a valid URL",
       },
     },
-    skills: [String],
-    location: {
-      type: { type: String, enum: ["Point"], default: "Point" },
-      coordinates: {
-        type: [Number],
-        validate: {
-          validator: (coords) => coords.length === 2,
-          message: "Coordinates must be [longitude, latitude]",
+    skills: {
+      type: [String],
+      validate: {
+        validator: function (val) {
+          return val.length <= 20; // If the function returns true, the data is saved
         },
+        message: "You can list up to 20 skills",
       },
     },
   },
